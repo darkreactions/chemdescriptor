@@ -1,0 +1,24 @@
+{
+    "descriptors": [
+        "refractivity",
+        "maximalprojectionarea",
+        "maximalprojectionradius",
+        "maximalprojectionsize",
+        "minimalprojectionarea",
+        "minimalprojectionradius",
+        "minimalprojectionsize"
+    ],
+    "ph_descriptors": [
+        "avgpol",
+        "molpol",
+        "vanderwaals",
+        "asa",
+        "asa+",
+        "asa-",
+        "asa_hydrophobic",
+        "asa_polar",
+        "hbda_acc",
+        "hbda_don",
+        "polar_surface_area"
+    ]
+}

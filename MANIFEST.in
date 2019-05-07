@@ -1,0 +1,4 @@
+include examples/descriptors_dict.json  
+include examples/descriptors_list.json  
+include examples/test_smile.smi  
+include examples/test_smiles.smi
