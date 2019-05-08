@@ -9,9 +9,14 @@ Type: ```pip install chemdescriptor```
 2. Working copy of ChemAxon cxcalc
 
 ## Usage
-Currently only supports ChemAxon cxcalc. The module can be expanded to cover other generators as well
+Currently only supports ChemAxon cxcalc. The module can be expanded to cover other generators as well.
+Example input files can be found in the examples/ folder of this repo as well as the pip installed package
 
 ### Command Line
+```
+chemdescriptor-cx -m /path/to/SMILES/file -d /path/to/descriptor/whitelist/json -p 6.8 7.0 7.2 -o output.csv
+```
+
 ```
 usage: chemdescriptor-cx [-h] -m MOLECULE -d DESCRIPTORS -p PH [PH ...]
                          [-c COMMANDS] [-pc PHCOMMANDS] -o OUTPUT
@@ -39,11 +44,12 @@ Import the generator class
 ``` from chemdescriptor import ChemAxonDescriptorGenerator ```
 
 Instantiate a generator
-``` cag = ChemAxonDescriptorGenerator('/path/to/SMILES/file',
-                                      '/path/to/descriptor/whitelist/json',
-                                      ph_values=[6, 7, 8],
-                                      command_stems=None,
-                                      ph_command_stems=None)
+``` 
+cag = ChemAxonDescriptorGenerator('/path/to/SMILES/file',
+                                  '/path/to/descriptor/whitelist/json',
+                                  ph_values=[6, 7, 8],
+                                  command_stems=None,
+                                  ph_command_stems=None)
 ```
 
 Generate csv output
