@@ -20,4 +20,7 @@ setuptools.setup(
     ],
     install_requires=['pandas'],
     include_package_data=True,
+    entry_points={
+        'console_scripts': ['chemdescriptor-cx=chemdescriptor.command_line:main'],
+    }
 )

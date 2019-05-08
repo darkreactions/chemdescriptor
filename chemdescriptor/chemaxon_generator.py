@@ -121,14 +121,14 @@ class ChemAxonDescriptorGenerator(BaseDescriptorGenerator):
                     copy.copy(command)]
 
             for pH in self.ph_values:
-                command = copy.copy(command)
+                ph_command = copy.copy(command)
                 pH_string = str(pH).replace('.', '_')  # R compatibility
-                if type(command) is list:
-                    command.extend(['-H', str(pH)])
+                if type(ph_command) is list:
+                    ph_command.extend(['-H', str(pH)])
                 else:
-                    command = [command, '-H', str(pH)]
+                    ph_command = [ph_command, '-H', str(pH)]
                 self._command_dict["{}_ph{}".format(
-                    ph_desc, pH_string)] = command
+                    ph_desc, pH_string)] = ph_command
 
     def generate(self, output_file_path):
         """
@@ -161,7 +161,7 @@ class ChemAxonDescriptorGenerator(BaseDescriptorGenerator):
                                       os.path.join(
                                           output_folder, 'lec_output.txt'),
                                       'leconformer', self.input_molecule_file_path, ])
-            # stdout=PIPE, stderr=PIPE, close_fds=True)
+            # stdout=PIPE, stderr=PIPE, close_fds = True)
             # lec = lowest energy conformer
         except Exception:
             print("Could not run chemaxon")
@@ -177,14 +177,15 @@ class ChemAxonDescriptorGenerator(BaseDescriptorGenerator):
             output_filename:    Path to output file
 
         """
-
         _command_list = list(chain.from_iterable(self._command_dict.values()))
+        print(_command_list)
         calcProc = subprocess.run([os.path.join(self.CXCALC_PATH, 'cxcalc'),
                                    '-o', output_filename, smiles_molecules] +
                                   _command_list)
         if calcProc.returncode != 0:
             print(calcProc.stderr)
-        self._parse_output(output_filename)
+        else:
+            self._parse_output(output_filename)
 
     def _parse_output(self, filename):
         """
@@ -210,6 +211,7 @@ class ChemAxonDescriptorGenerator(BaseDescriptorGenerator):
 
 if __name__ == "__main__":
     os.environ['CXCALC_PATH'] = '/home/h205c/chemaxon/bin'
+    """
     _cxcalcpHCommandStems = {
         'avgpol': 'avgpol',
         'molpol': 'molpol',
@@ -228,3 +230,4 @@ if __name__ == "__main__":
                                     ph_values=[7],
                                     ph_command_stems=_cxcalcpHCommandStems)
     c.generate('./output.csv')
+    """
