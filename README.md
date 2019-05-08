@@ -12,7 +12,9 @@ Type:
 
 ## Usage
 Currently only supports ChemAxon cxcalc. The module can be expanded to cover other generators as well.
-Example input files can be found in the examples/ folder of this repo as well as the pip installed package
+Example input files can be found in the examples/ folder of this repo as well as the pip installed package.
+
+**Important! The code requires an environment variable CXCALC_PATH to be set, which points to the folder where cxcalc is installed!**
 
 ### Command Line
 ```
@@ -41,6 +43,12 @@ optional arguments:
 ```
 
 ### In code
+Set CXCALC_PATH
+
+```
+import os
+os.environ['CXCALC_PATH'] = '/path/to/cxcalc'
+```
 
 Import the generator class
 
