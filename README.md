@@ -2,7 +2,9 @@
 Generic molecular descriptor generator wrapper around various software packages to simplify the process of getting descriptors
 
 ## To install
-Type: ```pip install chemdescriptor```
+Type:
+
+```pip install chemdescriptor```
 
 ## Requirements
 1. Pandas
@@ -41,6 +43,7 @@ optional arguments:
 ### In code
 
 Import the generator class
+
 ``` from chemdescriptor import ChemAxonDescriptorGenerator ```
 
 Instantiate a generator
@@ -57,7 +60,8 @@ Generate csv output
 
 ## Notes:
 
-Input SMILES file has a SMILES code in each line
+Input SMILES file has a SMILES code in each line.
+
 Descriptor whitelist is a json file of the form:
 ```
 {
@@ -87,8 +91,9 @@ Descriptor whitelist is a json file of the form:
 ```
 
 chemdescriptor expects 2 keys where "descriptors" are generic and "ph_descriptors" are ph dependent descriptors
+
 2 optional dictionaries can be passed to the ChemAxonDescriptorGenerator, "command_stems" and "ph_command_stems".
-These dictionaries "translate" the above descriptors into commands that chem axon can understand.
+These dictionaries "translate" the above descriptors into commands that ChemAxon cxcalc can understand.
 
 For example, if no value is passed to the ph_command_stems, the following dictionary is used:
 
@@ -108,7 +113,15 @@ _default_ph_command_stems = {
     }
 ```
 
+Note that commands with multiple words are entries in a list. For example, the command 
+
+```molecularsurfacearea -t ASA```
+
+is represented in the dictionary as ```['molecularsurfacearea', '-t', 'ASA']```
+
 # To Do
 [ ] Test on different machines
+
 [ ] Get feedback on what needs to be changed/improved
+
 [ ] Expand to cover other descriptor generators
