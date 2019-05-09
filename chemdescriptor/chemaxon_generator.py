@@ -138,12 +138,14 @@ class ChemAxonDescriptorGenerator(BaseDescriptorGenerator):
             output_file_path : Path to the desired output file
 
         """
-        # output_folder, output_file = os.path.split(output_file_path)
-        # lec_molecules = self.generate_lec(output_folder)
+        output_folder, output_file = os.path.split(output_file_path)
+        intermediate_file = os.path.join(output_folder, 'lec_molecules.txt')
+        self.generate_lec(intermediate_file)
         self.generate_descriptors(
-            self.input_molecule_file_path, output_file_path)
+            intermediate_file, output_file_path)
+        os.remove(intermediate_file)
 
-    def generate_lec(self, output_folder):
+    def generate_lec(self, output_file):
         """
         Method to filter out molecular structures with lowest
         energy conformer? Runs cxcalc on given molecules with leconformer
@@ -156,15 +158,12 @@ class ChemAxonDescriptorGenerator(BaseDescriptorGenerator):
         TODO: Verify contents of output file and parse accordingly
 
         """
-        try:
-            lecProc = subprocess.run([self.CXCALC_PATH + 'cxcalc', '-o',
-                                      os.path.join(
-                                          output_folder, 'lec_output.txt'),
-                                      'leconformer', self.input_molecule_file_path, ])
-            # stdout=PIPE, stderr=PIPE, close_fds = True)
-            # lec = lowest energy conformer
-        except Exception:
-            print("Could not run chemaxon")
+
+        lecProc = subprocess.run([os.path.join(self.CXCALC_PATH, 'cxcalc'), '-o',
+                                  output_file,
+                                  'leconformer', self.input_molecule_file_path, ])
+        if lecProc.returncode != 0:
+            print(lecProc.stderr)
 
     def generate_descriptors(self, smiles_molecules, output_filename):
         """
@@ -211,7 +210,7 @@ class ChemAxonDescriptorGenerator(BaseDescriptorGenerator):
 
 if __name__ == "__main__":
     os.environ['CXCALC_PATH'] = '/home/h205c/chemaxon/bin'
-    """
+
     _cxcalcpHCommandStems = {
         'avgpol': 'avgpol',
         'molpol': 'molpol',
@@ -225,9 +224,8 @@ if __name__ == "__main__":
         'hbda_don': 'donorcount',
         'polar_surface_area': 'polarsurfacearea',
     }
-    c = ChemAxonDescriptorGenerator('test_smile.smi',
-                                    'descriptors_list.json',
+    c = ChemAxonDescriptorGenerator('../examples/test_smile.smi',
+                                    '../examples/descriptors_list.json',
                                     ph_values=[7],
                                     ph_command_stems=_cxcalcpHCommandStems)
     c.generate('./output.csv')
-    """
