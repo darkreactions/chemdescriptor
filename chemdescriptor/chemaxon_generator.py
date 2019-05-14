@@ -6,6 +6,7 @@ from collections import OrderedDict
 from itertools import chain
 import copy
 import pandas as pd
+import traceback
 
 from .generator import BaseDescriptorGenerator
 
@@ -89,26 +90,9 @@ class ChemAxonDescriptorGenerator(BaseDescriptorGenerator):
         Checks if commands are in list form, if not, convert
 
         """
-        if self._command_stems:
-            for descriptor in self.descriptors:
-                if type(self._command_stems[descriptor]) is list:
-                    self._command_dict[descriptor] = self._command_stems[descriptor]
-                elif type(self._command_stems[descriptor]) is str:
-                    self._command_dict[descriptor] = \
-                        self._command_stems[descriptor].split()
-                else:
-                    raise Exception('Command for descriptor {} should be list or str.'
-                                    'Found {}'.format(descriptor, type(self._command_stems[descriptor])))
-        else:
-            for cmd in self.descriptors:
-                # Cannot use dict comprehension, because OrderedDict
-                if type(cmd) is list:
-                    self._command_dict[cmd] = cmd
-                elif type(cmd) is str:
-                    self._command_dict[cmd] = cmd.split()
-                else:
-                    raise Exception('Command for descriptor {} should be list or str.'
-                                    'Found {}'.format(cmd, type(cmd)))
+        for descriptor in self.descriptors:
+            self._command_dict = self._add_command(descriptor, self._command_stems,
+                                                   self._command_dict)
 
     def _setup_ph_descriptor_commands(self):
         """
@@ -118,30 +102,53 @@ class ChemAxonDescriptorGenerator(BaseDescriptorGenerator):
         """
 
         for ph_desc in self.ph_descriptors:
-            command = self._ph_command_stems[ph_desc]
-            nominal_copy = copy.copy(command)
-            if type(nominal_copy) is list:
-                self._command_dict["{}_nominal".format(
-                    ph_desc)] = nominal_copy
-            elif type(nominal_copy)is str:
-                self._command_dict["{}_nominal".format(ph_desc)] = \
-                    nominal_copy.split()
-            else:
-                raise Exception('Command for descriptor {} should be list or str.'
-                                'Found {}'.format(ph_desc, type(nominal_copy)))
+            self._command_dict = self._add_command(ph_desc, self._ph_command_stems,
+                                                   self._command_dict, postfix='nominal')
 
-            for pH in self.ph_values:
-                ph_command = copy.copy(command)
-                pH_string = str(pH).replace('.', '_')  # R compatibility
-                if type(ph_command) is list:
-                    ph_command.extend(['-H', str(pH)])
-                elif type(ph_command) is str:
-                    ph_command = ph_command.split() + ['-H', str(pH)]
-                else:
-                    raise Exception('Command for descriptor {} should be list or str.'
-                                    'Found {}'.format(ph_desc, type(ph_command)))
-                self._command_dict["{}_ph{}".format(
-                    ph_desc, pH_string)] = ph_command
+            for ph in self.ph_values:
+                ph_string = str(ph).replace('.', '_')  # R compatibility
+                self._command_dict = self._add_command(ph_desc, self._ph_command_stems,
+                                                       self._command_dict, postfix='ph'+ph_string, ph=ph)
+
+    def _add_command(self, descriptor, command_stems, command_dict, postfix=None, ph=None):
+        """
+        Adds a specific command to the command_dict. Checks whether descriptor exists in
+        the command_stems. Adds user defined postfix to command_dict key and ph related commands
+
+        Args:
+            descriptor:     Name of the descriptor being added
+            command_stems:  Lookup dict to get commands for a descriptor
+            command_dict:   Aggregation of all commands required for this run
+            postfix:        User defined extention of the key in command_dict (Optional)
+            ph:             pH value at which to run command (Optional)
+
+        Return:
+            command_dict:   Dict of all commands + current command
+        """
+        if command_stems and descriptor in command_stems:
+            cmd = command_stems[descriptor]
+        else:
+            cmd = descriptor
+
+        cmd = copy.copy(cmd)
+
+        if postfix:
+            descriptor_key = "{}_{}".format(descriptor, postfix)
+        else:
+            descriptor_key = descriptor
+
+        if type(cmd) is list:
+            command_dict[descriptor_key] = cmd
+        elif type(cmd) is str:
+            command_dict[descriptor_key] = cmd.split()
+        else:
+            raise Exception('Command for descriptor {} should be list or str.'
+                            'Found {}'.format(descriptor, type(cmd)))
+
+        if ph:
+            command_dict[descriptor_key] += ['-H', str(ph)]
+
+        return command_dict
 
     def generate(self, output_file_path):
         """
@@ -159,15 +166,19 @@ class ChemAxonDescriptorGenerator(BaseDescriptorGenerator):
         """
         output_folder, output_file = os.path.split(output_file_path)
         intermediate_file = os.path.join(output_folder, 'lec_molecules.txt')
+
         try:
             self.generate_lec(intermediate_file)
             self.generate_descriptors(
                 intermediate_file, output_file_path)
-        except:
+        except Exception as e:
+            print("Exception : {}".format(e))
+
             if os.path.exists(intermediate_file):
                 # Clean up intermediate file if an exception occurs
                 os.remove(intermediate_file)
-        os.remove(intermediate_file)
+        if os.path.exists(intermediate_file):
+            os.remove(intermediate_file)
 
     def generate_lec(self, output_file):
         """
@@ -250,4 +261,4 @@ if __name__ == "__main__":
                                     '../examples/descriptors_list.json',
                                     ph_values=[7],
                                     ph_command_stems=_cxcalcpHCommandStems)
-    c.generate('./output.csv')
+    c.generate('output.csv')
