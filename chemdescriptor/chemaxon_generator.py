@@ -137,9 +137,9 @@ class ChemAxonDescriptorGenerator(BaseDescriptorGenerator):
         else:
             descriptor_key = descriptor
 
-        if type(cmd) is list:
+        if isinstance(cmd, list):
             command_dict[descriptor_key] = cmd
-        elif type(cmd) is str:
+        elif isinstance(cmd, str):
             command_dict[descriptor_key] = cmd.split()
         else:
             raise Exception('Command for descriptor {} should be list or str.'
