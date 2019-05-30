@@ -150,7 +150,7 @@ class ChemAxonDescriptorGenerator(BaseDescriptorGenerator):
 
         return command_dict
 
-    def generate(self, output_file_path):
+    def generate(self, output_file_path, dataframe=False):
         """
         Method called to generate descriptors
         Calculates Least Energy Conformer (LEC) for each molecule by cxcalc and then writes
@@ -169,7 +169,7 @@ class ChemAxonDescriptorGenerator(BaseDescriptorGenerator):
 
         try:
             self.generate_lec(intermediate_file)
-            self.generate_descriptors(
+            result_dataframe = self.generate_descriptors(
                 intermediate_file, output_file_path)
         except Exception as e:
             print("Exception : {}".format(e))
@@ -179,6 +179,11 @@ class ChemAxonDescriptorGenerator(BaseDescriptorGenerator):
                 os.remove(intermediate_file)
         if os.path.exists(intermediate_file):
             os.remove(intermediate_file)
+
+        if dataframe:
+            return result_dataframe
+        else:
+            return None
 
     def generate_lec(self, output_file):
         """
@@ -216,7 +221,7 @@ class ChemAxonDescriptorGenerator(BaseDescriptorGenerator):
         if calcProc.returncode != 0:
             print(calcProc.stderr)
         else:
-            self._parse_output(output_filename)
+            return self._parse_output(output_filename)
 
     def _parse_output(self, filename):
         """
@@ -239,6 +244,8 @@ class ChemAxonDescriptorGenerator(BaseDescriptorGenerator):
         df.columns = ['Compound'] + \
             [label for label in self._command_dict.keys()]
         df.to_csv(filename, index=False)
+
+        return df
 
 
 if __name__ == "__main__":
