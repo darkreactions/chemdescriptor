@@ -22,7 +22,7 @@ class ChemAxonDescriptorGenerator(BaseDescriptorGenerator):
 
     """
     name = 'ChemAxon Descriptor Generator'
-    version = 'x.x'
+    version = '0.0.3'
     CXCALC_PATH = None
     _default_ph_command_stems = {
         'avgpol': 'avgpol',
@@ -39,21 +39,21 @@ class ChemAxonDescriptorGenerator(BaseDescriptorGenerator):
     }
 
     def __init__(self,
-                 input_molecule_file_path,
-                 descriptor_file_path,
+                 input_molecules,
+                 descriptors,
                  ph_values=[],
                  command_stems=None,
                  ph_command_stems=None):
         """
         Initializes the generator
         Args:
-            input_molecule_file_path:   path to ip molecules
-            descriptor_file_path:       path to ip descriptors
+            input_molecules:   path to ip molecules
+            descriptors:       path to ip descriptors
             ph_values:                  list of pH values at which to calculate descriptors
             command_stems:              Dictonary of descriptors and its command stem
             ph_command_stems:           Dict of pH related descriptors and command stems
         """
-        super().__init__(input_molecule_file_path, descriptor_file_path)
+        super().__init__(input_molecules, descriptors)
 
         # Look for cxcalc path
         if 'CXCALC_PATH' in os.environ:
@@ -70,14 +70,27 @@ class ChemAxonDescriptorGenerator(BaseDescriptorGenerator):
             self._ph_command_stems = self._default_ph_command_stems
 
         # Read descriptors form given json file
-        with open(descriptor_file_path, 'r') as f:
-            desc = json.load(f)
-            self.descriptors = desc['descriptors']
-            self.ph_descriptors = desc['ph_descriptors']
+        if isinstance(descriptors, str):
+            with open(descriptors, 'r') as f:
+                desc = json.load(f)
+        elif isinstance(descriptors, dict):
+            desc = descriptors
+        else:
+            raise Exception(
+                "'descriptors' should be a path or dict. Found: {}".format(type(descriptors)))
+
+        self.descriptors = desc['descriptors']
+        self.ph_descriptors = desc['ph_descriptors']
 
         # Read smiles
-        with open(input_molecule_file_path, 'r') as f:
-            self.smiles = f.read().splitlines()
+        if isinstance(input_molecules, str):
+            with open(input_molecules, 'r') as f:
+                self.smiles = f.read().splitlines()
+        elif isinstance(input_molecules, (list, set, tuple)):
+            self.smiles = input_molecules
+        else:
+            raise Exception(
+                "'input_molecules' should be a path or list. Found: {}".format(type(input_molecules)))
 
         # Setup Descriptor commands required for chemaxon
         self._command_dict = OrderedDict()
