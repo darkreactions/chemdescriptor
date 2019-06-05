@@ -88,6 +88,7 @@ class ChemAxonDescriptorGenerator(BaseDescriptorGenerator):
                 self.smiles = f.read().splitlines()
         elif isinstance(input_molecules, (list, set, tuple)):
             self.smiles = input_molecules
+
         else:
             raise Exception(
                 "'input_molecules' should be a path or list. Found: {}".format(type(input_molecules)))
@@ -208,10 +209,15 @@ class ChemAxonDescriptorGenerator(BaseDescriptorGenerator):
             is written
 
         """
-
+        folder, filename = os.path.split(output_file)
+        input_molecule_file_path = os.path.join(folder, 'input_smiles.smi')
+        print(self.smiles)
+        with open(input_molecule_file_path, 'w') as f:
+            f.writelines("\n".join(self.smiles))
         lecProc = subprocess.run([os.path.join(self.CXCALC_PATH, 'cxcalc'), '-o',
                                   output_file,
-                                  'leconformer', self.input_molecule_file_path, ])
+                                  'leconformer', input_molecule_file_path, ])
+        os.remove(input_molecule_file_path)
         if lecProc.returncode != 0:
             print(lecProc.stderr)
 
