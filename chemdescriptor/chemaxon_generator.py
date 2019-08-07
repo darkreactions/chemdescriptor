@@ -164,7 +164,7 @@ class ChemAxonDescriptorGenerator(BaseDescriptorGenerator):
 
         return command_dict
 
-    def generate(self, output_file_path, dataframe=False):
+    def generate(self, output_file_path, dataframe=False, lec_conformer=False):
         """
         Method called to generate descriptors
         Calculates Least Energy Conformer (LEC) for each molecule by cxcalc and then writes
@@ -176,22 +176,30 @@ class ChemAxonDescriptorGenerator(BaseDescriptorGenerator):
 
         Args:
             output_file_path : Path to the desired output file
+            dataframe : Bool value to return a dataframe or csv file
+            lec_conformer : Bool to indicate whether lec_conformer is available, default is False
 
         """
         output_folder, output_file = os.path.split(output_file_path)
-        intermediate_file = os.path.join(output_folder, 'lec_molecules.txt')
 
         try:
-            self.generate_lec(intermediate_file)
+            if lec_conformer:
+                intermediate_file = os.path.join(
+                    output_folder, 'lec_molecules.txt')
+                self.generate_lec(intermediate_file)
+            else:
+                intermediate_file = self.input_molecule_file_path
+
             result_dataframe = self.generate_descriptors(
                 intermediate_file, output_file_path)
         except Exception as e:
             print("Exception : {}".format(e))
 
-            if os.path.exists(intermediate_file):
+            if lec_conformer and os.path.exists(intermediate_file):
                 # Clean up intermediate file if an exception occurs
                 os.remove(intermediate_file)
-        if os.path.exists(intermediate_file):
+
+        if lec_conformer and os.path.exists(intermediate_file):
             os.remove(intermediate_file)
 
         if dataframe:
@@ -211,7 +219,7 @@ class ChemAxonDescriptorGenerator(BaseDescriptorGenerator):
         """
         folder, filename = os.path.split(output_file)
         input_molecule_file_path = os.path.join(folder, 'input_smiles.smi')
-        print(self.smiles)
+        # print(self.smiles)
         with open(input_molecule_file_path, 'w') as f:
             f.writelines("\n".join(self.smiles))
         lecProc = subprocess.run([os.path.join(self.CXCALC_PATH, 'cxcalc'), '-o',
@@ -268,7 +276,7 @@ class ChemAxonDescriptorGenerator(BaseDescriptorGenerator):
 
 
 if __name__ == "__main__":
-    os.environ['CXCALC_PATH'] = '/home/h205c/chemaxon/bin'
+    os.environ['CXCALC_PATH'] = '/Applications/MarvinSuite/bin'
 
     _cxcalcpHCommandStems = {
         'avgpol': 'avgpol',
@@ -283,7 +291,7 @@ if __name__ == "__main__":
         'hbda_don': 'donorcount',
         'polar_surface_area': 'polarsurfacearea',
     }
-    c = ChemAxonDescriptorGenerator('../examples/test_smile.smi',
+    c = ChemAxonDescriptorGenerator('../examples/test_smiles.smi',
                                     '../examples/descriptors_list.json',
                                     ph_values=[7],
                                     ph_command_stems=_cxcalcpHCommandStems)
