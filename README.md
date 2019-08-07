@@ -64,10 +64,10 @@ cag = ChemAxonDescriptorGenerator('/path/to/SMILES/file',
 ```
 
 Generate csv output
-``` cag.generate('output.csv') ```
+``` cag.generate('output.csv', dataframe=False, lec=False) ```
 
-Optional keyword arguments for `generate` include `dataframe` boolean (default False) which returns a dataframe in addition to writing a csv if True
-and `lec_conformer` boolean (default False) which converts the Smiles code to an intermediate "Low Energy Conformer (LEC)" representation before generating descriptors.
+Optional keyword arguments for `generate` include `dataframe` boolean (default False) which returns a pandas dataframe in addition to writing a csv if True
+and `lec` boolean (default False) which converts the Smiles code to an intermediate "Low Energy Conformer (LEC)" representation before generating descriptors.
 A license is most likely required to generate LECs.
 
 ## Notes:

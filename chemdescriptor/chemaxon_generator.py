@@ -22,7 +22,7 @@ class ChemAxonDescriptorGenerator(BaseDescriptorGenerator):
 
     """
     name = 'ChemAxon Descriptor Generator'
-    version = '0.0.3'
+    __version__ = '0.0.4'
     CXCALC_PATH = None
     _default_ph_command_stems = {
         'avgpol': 'avgpol',
@@ -164,7 +164,7 @@ class ChemAxonDescriptorGenerator(BaseDescriptorGenerator):
 
         return command_dict
 
-    def generate(self, output_file_path, dataframe=False, lec_conformer=False):
+    def generate(self, output_file_path, dataframe=False, lec=False):
         """
         Method called to generate descriptors
         Calculates Least Energy Conformer (LEC) for each molecule by cxcalc and then writes
@@ -177,13 +177,13 @@ class ChemAxonDescriptorGenerator(BaseDescriptorGenerator):
         Args:
             output_file_path : Path to the desired output file
             dataframe : Bool value to return a dataframe or csv file
-            lec_conformer : Bool to indicate whether lec_conformer is available, default is False
+            lec : Bool to indicate whether leconformer is available in cxcalc, default is False
 
         """
         output_folder, output_file = os.path.split(output_file_path)
 
         try:
-            if lec_conformer:
+            if lec:
                 intermediate_file = os.path.join(
                     output_folder, 'lec_molecules.txt')
                 self.generate_lec(intermediate_file)
@@ -195,11 +195,11 @@ class ChemAxonDescriptorGenerator(BaseDescriptorGenerator):
         except Exception as e:
             print("Exception : {}".format(e))
 
-            if lec_conformer and os.path.exists(intermediate_file):
+            if lec and os.path.exists(intermediate_file):
                 # Clean up intermediate file if an exception occurs
                 os.remove(intermediate_file)
 
-        if lec_conformer and os.path.exists(intermediate_file):
+        if lec and os.path.exists(intermediate_file):
             os.remove(intermediate_file)
 
         if dataframe:
@@ -291,8 +291,8 @@ if __name__ == "__main__":
         'hbda_don': 'donorcount',
         'polar_surface_area': 'polarsurfacearea',
     }
-    c = ChemAxonDescriptorGenerator('../examples/test_smiles.smi',
+    c = ChemAxonDescriptorGenerator('../examples/1000smiles.smi',
                                     '../examples/descriptors_list.json',
                                     ph_values=[7],
                                     ph_command_stems=_cxcalcpHCommandStems)
-    c.generate('output.csv')
+    c.generate('output.csv', lec=True)
