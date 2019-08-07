@@ -22,7 +22,7 @@ class ChemAxonDescriptorGenerator(BaseDescriptorGenerator):
 
     """
     name = 'ChemAxon Descriptor Generator'
-    __version__ = '0.0.4'
+    __version__ = '0.0.5'
     CXCALC_PATH = None
     _default_ph_command_stems = {
         'avgpol': 'avgpol',
