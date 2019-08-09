@@ -269,8 +269,9 @@ class ChemAxonDescriptorGenerator(BaseDescriptorGenerator):
         df = df[['Compound'] + [c for c in df if c not in ['id', 'Compound']]]
         # Replace cxcalc generated labels with the ones defined in descriptor dict
         # Commented out because cxcalc does not generate the same number of columns
-        # df.columns = ['Compound'] + \
-        #    [label for label in self._command_dict.keys()]
+        if len(self._command_dict.keys()) + 1 == len(df.columns):
+            df.columns = ['Compound'] + \
+                [label for label in self._command_dict.keys()]
         df.to_csv(filename, index=False)
 
         return df
