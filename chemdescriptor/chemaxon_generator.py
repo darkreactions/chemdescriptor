@@ -268,8 +268,9 @@ class ChemAxonDescriptorGenerator(BaseDescriptorGenerator):
         # Replace First column with Compound
         df = df[['Compound'] + [c for c in df if c not in ['id', 'Compound']]]
         # Replace cxcalc generated labels with the ones defined in descriptor dict
-        df.columns = ['Compound'] + \
-            [label for label in self._command_dict.keys()]
+        # Commented out because cxcalc does not generate the same number of columns
+        # df.columns = ['Compound'] + \
+        #    [label for label in self._command_dict.keys()]
         df.to_csv(filename, index=False)
 
         return df
@@ -291,8 +292,7 @@ if __name__ == "__main__":
         'hbda_don': 'donorcount',
         'polar_surface_area': 'polarsurfacearea',
     }
-    c = ChemAxonDescriptorGenerator('../examples/1000smiles.smi',
-                                    '../examples/descriptors_list.json',
-                                    ph_values=[7],
-                                    ph_command_stems=_cxcalcpHCommandStems)
-    c.generate('output.csv', lec=True)
+    c = ChemAxonDescriptorGenerator('/Users/vshekar/Code/misc_test_code/test_smiles.txt',
+                                    '/Users/vshekar/Code/misc_test_code/descriptors_list.json',
+                                    ph_values=[])
+    c.generate('output.csv', lec=False)
