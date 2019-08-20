@@ -22,8 +22,7 @@ class ChemAxonDescriptorGenerator(BaseDescriptorGenerator):
 
     """
     name = 'ChemAxon Descriptor Generator'
-    __version__ = '0.0.5'
-    CXCALC_PATH = None
+    __version__ = '0.0.6'
     _default_ph_command_stems = {
         'avgpol': 'avgpol',
         'molpol': 'molpol',
@@ -47,13 +46,13 @@ class ChemAxonDescriptorGenerator(BaseDescriptorGenerator):
         """
         Initializes the generator
         Args:
-            input_molecules:   path to ip molecules
-            descriptors:       path to ip descriptors
+            input_molecules:   path to ip molecules/or list of smiles
+            descriptors:       path to ip descriptors/or list of descriptors
             ph_values:                  list of pH values at which to calculate descriptors
             command_stems:              Dictonary of descriptors and its command stem
             ph_command_stems:           Dict of pH related descriptors and command stems
         """
-        super().__init__(input_molecules, descriptors)
+        super().__init__()
 
         # Look for cxcalc path
         if 'CXCALC_PATH' in os.environ:
@@ -84,8 +83,9 @@ class ChemAxonDescriptorGenerator(BaseDescriptorGenerator):
 
         # Read smiles
         if isinstance(input_molecules, str):
-            with open(input_molecules, 'r') as f:
-                self.smiles = f.read().splitlines()
+            if os.path.exists(input_molecules):
+                with open(input_molecules, 'r') as f:
+                    self.smiles = f.read().splitlines()
         elif isinstance(input_molecules, (list, set, tuple)):
             self.smiles = input_molecules
 
@@ -182,16 +182,22 @@ class ChemAxonDescriptorGenerator(BaseDescriptorGenerator):
         """
         output_folder, output_file = os.path.split(output_file_path)
 
+        self.input_molecule_file_path = os.path.join(
+            output_folder, 'input_smiles.smi')
+        # print(self.smiles)
+        with open(self.input_molecule_file_path, 'w') as f:
+            f.writelines("\n".join(self.smiles))
+
         try:
             if lec:
                 intermediate_file = os.path.join(
                     output_folder, 'lec_molecules.txt')
                 self.generate_lec(intermediate_file)
+                result_dataframe = self.generate_descriptors(
+                    intermediate_file, output_file_path)
             else:
-                intermediate_file = self.input_molecule_file_path
-
-            result_dataframe = self.generate_descriptors(
-                intermediate_file, output_file_path)
+                result_dataframe = self.generate_descriptors(
+                    self.input_molecule_file_path, output_file_path)
         except Exception as e:
             print("Exception : {}".format(e))
 
@@ -201,6 +207,8 @@ class ChemAxonDescriptorGenerator(BaseDescriptorGenerator):
 
         if lec and os.path.exists(intermediate_file):
             os.remove(intermediate_file)
+
+        os.remove(self.input_molecule_file_path)
 
         if dataframe:
             return result_dataframe
@@ -217,15 +225,10 @@ class ChemAxonDescriptorGenerator(BaseDescriptorGenerator):
             is written
 
         """
-        folder, filename = os.path.split(output_file)
-        input_molecule_file_path = os.path.join(folder, 'input_smiles.smi')
-        # print(self.smiles)
-        with open(input_molecule_file_path, 'w') as f:
-            f.writelines("\n".join(self.smiles))
+
         lecProc = subprocess.run([os.path.join(self.CXCALC_PATH, 'cxcalc'), '-o',
                                   output_file,
-                                  'leconformer', input_molecule_file_path, ])
-        os.remove(input_molecule_file_path)
+                                  'leconformer', self.input_molecule_file_path, ])
         if lecProc.returncode != 0:
             print(lecProc.stderr)
 
@@ -236,7 +239,7 @@ class ChemAxonDescriptorGenerator(BaseDescriptorGenerator):
 
         Args:
             smiles_molecules:   Path to file of SMILES molecules or LEC molecules
-                                Ideally passed through generate_lec
+                                Ideally passed through generate_lec OR a list of smiles strings
             output_filename:    Path to output file
 
         """
@@ -296,4 +299,4 @@ if __name__ == "__main__":
     c = ChemAxonDescriptorGenerator('/Users/vshekar/Code/misc_test_code/test_smiles.txt',
                                     '/Users/vshekar/Code/misc_test_code/descriptors_list.json',
                                     ph_values=[])
-    c.generate('output.csv', lec=False)
+    c.generate('output.csv', lec=True)
