@@ -1,0 +1,45 @@
+{% set name = "javabridge" %}
+{% set version = "1.0.18" %}
+
+package:
+  name: "{{ name|lower }}"
+  version: "{{ version }}"
+
+source:
+  url: https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/{{ name }}-{{ version }}.tar.gz
+  sha256: d6d27dad4331fd1f4cc4a82aedd168bbc3d57641def8f055e137ae3cad521737
+
+build:
+  number: 0
+  script: "{{ PYTHON }} -m pip install . --no-deps --ignore-installed -vv "
+
+requirements:
+  host:
+    - numpy
+    - pip
+    - python
+    - setuptools
+  run:
+    - numpy
+    - python
+    - setuptools
+
+test:
+  imports:
+    - javabridge
+    - javabridge.tests
+  requires:
+    - nose
+
+about:
+  home: http://github.com/CellProfiler/python-javabridge/
+  license: BSD
+  license_family: BSD
+  license_file: 
+  summary: Python wrapper for the Java Native Interface
+  doc_url: 
+  dev_url: 
+
+extra:
+  recipe-maintainers:
+    - your-github-id-here
