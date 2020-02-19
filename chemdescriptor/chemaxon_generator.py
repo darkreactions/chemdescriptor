@@ -246,7 +246,7 @@ class ChemAxonDescriptorGenerator(BaseDescriptorGenerator):
         _command_list = list(chain.from_iterable(self._command_dict.values()))
 
         calcProc = subprocess.run([os.path.join(self.CXCALC_PATH, 'cxcalc'),
-                                   '-o', output_filename, smiles_molecules] +
+                                   '-g', '-o', output_filename, smiles_molecules] +
                                   _command_list)
         if calcProc.returncode != 0:
             print(calcProc.stderr)

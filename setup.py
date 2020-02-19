@@ -5,7 +5,7 @@ with open('README.md', 'r') as f:
 
 setuptools.setup(
     name='chemdescriptor',
-    version='0.0.7',
+    version='0.1.0',
     author="DRP Project",
     author_email="darkreactionproject@haverford.edu",
     description="A standalone module to help generate molecular descriptors from various cheminformatics software",
@@ -21,6 +21,8 @@ setuptools.setup(
     install_requires=['pandas'],
     include_package_data=True,
     entry_points={
-        'console_scripts': ['chemdescriptor-cx=chemdescriptor.command_line:main'],
+        'console_scripts': ['chemdescriptor-cx=chemdescriptor.command_line:cxcalc',
+                            'chemdescriptor-rdkit=chemdescriptor.command_line:rdkit'],
+
     }
 )

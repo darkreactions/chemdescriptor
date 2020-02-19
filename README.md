@@ -8,11 +8,16 @@ Type:
 
 ## Requirements
 1. Pandas
-2. Working copy of ChemAxon cxcalc
+2. ChemAxon descriptors
+    - Working copy of ChemAxon cxcalc
+3. RDKit descriptors
+    - RDKit installed
 
 ## Usage
-Currently only supports ChemAxon cxcalc. The module can be expanded to cover other generators as well.
+Currently only supports ChemAxon cxcalc and RDKit. The module can be expanded to cover other generators as well.
 Example input files can be found in the examples/ folder of this repo as well as the pip installed package.
+
+### CXCalc
 
 **Important! The code requires an environment variable CXCALC_PATH to be set, which points to the folder where cxcalc is installed!**
 
@@ -130,6 +135,11 @@ Note that commands with multiple words are entries in a list. For example, the c
 ```molecularsurfacearea -t ASA```
 
 is represented in the dictionary as ```['molecularsurfacearea', '-t', 'ASA']```
+
+### RDKit
+
+Much easier to use. Only needs a list of descriptors similar to cxcalc. 
+
 
 # To Do
 [ ] Test on different machines

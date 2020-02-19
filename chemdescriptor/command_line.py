@@ -1,9 +1,11 @@
 from .chemaxon_generator import ChemAxonDescriptorGenerator
+from .rdkit_generator import RDKitDescriptorGenerator
 import argparse
 
 
-def main():
-    parser = argparse.ArgumentParser()
+def cxcalc():
+    parser = argparse.ArgumentParser(prog='chemdescriptor-cx',
+                                     description='Generate molecular descriptors from ChemAxon cxcalc')
     parser.add_argument('-m', '--molecule',
                         help="Path to input SMILES file", required=True)
     parser.add_argument('-d', '--descriptors',
@@ -25,3 +27,19 @@ def main():
                                     command_stems=args.commands,
                                     ph_command_stems=args.phcommands)
     c.generate(args.output)
+
+
+def rdkit():
+    parser = argparse.ArgumentParser(prog='chemdescriptor-rdkit',
+                                     description='Generate molecular descriptors from rdkit')
+    parser.add_argument('-m', '--molecule',
+                        help="Path to input SMILES file", required=True)
+    parser.add_argument('-d', '--descriptors',
+                        help="Path to descriptor white list json file", required=True)
+    parser.add_argument('-o', '--output',
+                        help='Path to output file', required=True)
+    args = parser.parse_args()
+
+    r = RDKitDescriptorGenerator(args.molecule,
+                                 args.descriptors)
+    r.generate(args.output)

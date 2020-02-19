@@ -10,7 +10,7 @@ import traceback
 from rdkit import Chem
 from rdkit.Chem import Descriptors, Descriptors3D
 
-from generator import BaseDescriptorGenerator
+from .generator import BaseDescriptorGenerator
 
 
 class RDKitDescriptorGenerator(BaseDescriptorGenerator):
