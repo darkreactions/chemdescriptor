@@ -9,7 +9,8 @@ import pandas as pd
 import traceback
 import shutil
 
-from generator import BaseDescriptorGenerator
+from chemdescriptor.generator import BaseDescriptorGenerator
+from chemdescriptor.cxcalc_defaults import default_command_dict
 
 
 class ChemAxonDescriptorGenerator(BaseDescriptorGenerator):
@@ -58,29 +59,14 @@ class ChemAxonDescriptorGenerator(BaseDescriptorGenerator):
         else:
             self._command_dict = default_command_dict
 
-        if ph_command_stems:
-            self._ph_command_stems = ph_command_stems
-        else:
-            self._ph_command_stems = self._default_ph_command_stems
-
-        # Read descriptors form given json file
-        if isinstance(descriptors, str):
-            with open(descriptors, 'r') as f:
-                desc = json.load(f)
-        elif isinstance(descriptors, dict):
-            desc = descriptors
-        else:
-            raise Exception(
-                "'descriptors' should be a path or dict. Found: {}".format(type(descriptors)))
-
-        self.descriptors = desc['descriptors']
-        self.ph_descriptors = desc['ph_descriptors']
+        self.descriptors = self._command_dict['descriptors']
+        self.ph_descriptors = self._command_dict['ph_descriptors']
 
         try:
             iter(input_molecules)
             self.smiles = input_molecules
         except TypeError:
-            print('input_molecules is not an iterable')
+            print('input_molecules is not an iterable, should be a list, tuple etc.')
 
         # Setup Descriptor commands required for chemaxon
         self._command_dict = OrderedDict()
