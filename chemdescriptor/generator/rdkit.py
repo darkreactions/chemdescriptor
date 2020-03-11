@@ -10,23 +10,24 @@ import traceback
 from rdkit import Chem
 from rdkit.Chem import Descriptors, Descriptors3D
 
-from .generator import BaseDescriptorGenerator
+from .base import BaseDescriptorGenerator
 
 
 class RDKitDescriptorGenerator(BaseDescriptorGenerator):
     name = 'RDKit Descriptor Generator'
-    __version__ = '0.0.1'
+    __version__ = '0.0.2'
 
     def __init__(self,
                  input_molecules,
                  descriptors,
                  ph_values=[],
                  command_stems=None,
-                 ph_command_stems=None):
+                 ph_command_stems=None,
+                 logfile=None):
         """Handles only SMILES and stores into self.molecules
         TODO: Handle InchI
         """
-        super().__init__()
+        super().__init__(logfile=logfile)
 
         self.descriptor_dict = {desc[0]: desc[1]
                                 for desc in Descriptors.descList}

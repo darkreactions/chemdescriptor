@@ -8,27 +8,23 @@ import copy
 import pandas as pd
 import traceback
 import shutil
+from pathlib import Path
 
-from chemdescriptor.generator import BaseDescriptorGenerator
-from chemdescriptor.cxcalc_defaults import default_command_dict
+from .base import BaseDescriptorGenerator
+from ..defaults.cxcalc import default_command_dict
 
 
 class ChemAxonDescriptorGenerator(BaseDescriptorGenerator):
     """
     This descriptor generator class requires a valid installation
     of ChemAxon.
-
-    TODO: Specify output type (csv, database etc.)
-    TODO: Specify input type (currently expects a random
-          assortment of csv and text files)
-
     """
     name = 'ChemAxon Descriptor Generator'
     __version__ = '0.0.6'
 
     def __init__(self,
                  input_molecules,
-                 whitelist=[],
+                 whitelist={},
                  ph_values=[],
                  command_dict=None,
                  logfile=None):
@@ -36,22 +32,25 @@ class ChemAxonDescriptorGenerator(BaseDescriptorGenerator):
         Initializes the generator
         Args:
             input_molecules:    list of smiles
-            whitelist:          list of keys in the command dict. If empty, use all descriptors
+            whitelist:          dict of keys in the command dict. If empty, use all descriptors
             ph_values:          list of pH values at which to calculate descriptors
             command_dict:       Dictionary of commands to run. Uses internal dict if none provided
             logfile:            Path to logfile in case of errors
         """
         super().__init__(logfile)
-
+        print('Starting cxcalc')
         # Look for cxcalc path
         # TODO: Auto search for cxcalc
-        print(shutil.which('cxcalc'))
-        if 'CXCALC_PATH' in os.environ:
+        if shutil.which('cxcalc'):
+            self.CXCALC_PATH = Path(shutil.which('cxcalc')).parent
+        elif 'CXCALC_PATH' in os.environ:
             self.CXCALC_PATH = os.environ['CXCALC_PATH']
         else:
-            raise Exception('CXCALC_PATH environment variable not set')
+            raise Exception(
+                'cxcalc command not found or CXCALC_PATH environment variable not set')
 
         # Initialize inputs
+
         self.ph_values = ph_values
 
         if command_dict:
@@ -59,8 +58,8 @@ class ChemAxonDescriptorGenerator(BaseDescriptorGenerator):
         else:
             self._command_dict = default_command_dict
 
-        self.descriptors = self._command_dict['descriptors']
-        self.ph_descriptors = self._command_dict['ph_descriptors']
+        self.descriptors_dict = self._command_dict['descriptors']
+        self.ph_descriptors_dict = self._command_dict['ph_descriptors']
 
         try:
             iter(input_molecules)
@@ -68,8 +67,18 @@ class ChemAxonDescriptorGenerator(BaseDescriptorGenerator):
         except TypeError:
             print('input_molecules is not an iterable, should be a list, tuple etc.')
 
+        # If the whitelist is empty, use all default descriptors
+        self.whitelist = {}
+        if whitelist:
+            self.whitelist = whitelist
+        else:
+            self.whitelist['descriptors'] = list(self.descriptors_dict.keys())
+            self.whitelist['ph_descriptors'] = list(
+                self.ph_descriptors_dict.keys())
+
         # Setup Descriptor commands required for chemaxon
         self._command_dict = OrderedDict()
+        self._column_names = []
         self._setup_descriptor_commands()
         self._setup_ph_descriptor_commands()
 
@@ -79,9 +88,8 @@ class ChemAxonDescriptorGenerator(BaseDescriptorGenerator):
         Checks if commands are in list form, if not, convert
 
         """
-        for descriptor in self.descriptors:
-            self._command_dict = self._add_command(descriptor, self._command_stems,
-                                                   self._command_dict)
+        for descriptor in self.whitelist['descriptors']:
+            self._add_command(descriptor, self.descriptors_dict)
 
     def _setup_ph_descriptor_commands(self):
         """
@@ -90,16 +98,16 @@ class ChemAxonDescriptorGenerator(BaseDescriptorGenerator):
 
         """
 
-        for ph_desc in self.ph_descriptors:
-            self._command_dict = self._add_command(ph_desc, self._ph_command_stems,
-                                                   self._command_dict, postfix='nominal')
+        for ph_desc in self.whitelist['ph_descriptors']:
+            self._add_command(ph_desc, self.ph_descriptors_dict,
+                              postfix='nominal')
 
             for ph in self.ph_values:
                 ph_string = str(ph).replace('.', '_')  # R compatibility
-                self._command_dict = self._add_command(ph_desc, self._ph_command_stems,
-                                                       self._command_dict, postfix='ph'+ph_string, ph=ph)
+                self._add_command(ph_desc, self.ph_descriptors_dict,
+                                  postfix='ph'+ph_string, ph=ph)
 
-    def _add_command(self, descriptor, command_stems, command_dict, postfix=None, ph=None):
+    def _add_command(self, descriptor, command_stems, postfix=None, ph=None):
         """
         Adds a specific command to the command_dict. Checks whether descriptor exists in
         the command_stems. Adds user defined postfix to command_dict key and ph related commands
@@ -111,35 +119,33 @@ class ChemAxonDescriptorGenerator(BaseDescriptorGenerator):
             postfix:        User defined extention of the key in command_dict (Optional)
             ph:             pH value at which to run command (Optional)
 
-        Return:
-            command_dict:   Dict of all commands + current command
         """
-        #print('descriptor: {}'.format(descriptor))
-        #print('command_stems: {}'.format(command_stems))
+
         if command_stems and (descriptor in command_stems):
-            cmd = command_stems[descriptor]
+            cmd = command_stems[descriptor]['command']
+            col_names = command_stems[descriptor]['column_names']
         else:
             cmd = descriptor
+            col_names = descriptor
 
         cmd = copy.copy(cmd)
+        col_names = copy.copy(col_names)
 
         if postfix:
             descriptor_key = "{}_{}".format(descriptor, postfix)
+            col_names = ["{}_{}".format(name, postfix) for name in col_names]
         else:
             descriptor_key = descriptor
 
         if isinstance(cmd, list):
-            command_dict[descriptor_key] = cmd
-        elif isinstance(cmd, str):
-            command_dict[descriptor_key] = cmd.split()
+            self._command_dict[descriptor_key] = cmd
+            self._column_names += col_names
         else:
-            raise Exception('Command for descriptor {} should be list or str.'
+            raise Exception('Command for descriptor {} should be list'
                             'Found {}'.format(descriptor, type(cmd)))
 
         if ph:
-            command_dict[descriptor_key] += ['-H', str(ph)]
-
-        return command_dict
+            self._command_dict[descriptor_key] += ['-H', str(ph)]
 
     def generate(self, output_file_path, dataframe=False, lec=False):
         """
@@ -218,7 +224,7 @@ class ChemAxonDescriptorGenerator(BaseDescriptorGenerator):
 
         """
         _command_list = list(chain.from_iterable(self._command_dict.values()))
-        print(_command_list)
+        self.logger.info('Command list: {}'.format(_command_list))
 
         calcProc = subprocess.run([os.path.join(self.CXCALC_PATH, 'cxcalc'),
                                    '-g', '-o', output_filename, smiles_molecules] +
@@ -248,12 +254,16 @@ class ChemAxonDescriptorGenerator(BaseDescriptorGenerator):
         df = df[['Compound'] + [c for c in df if c not in ['id', 'Compound']]]
         # Replace cxcalc generated labels with the ones defined in descriptor dict
         # Commented out because cxcalc does not generate the same number of columns
-        if len(self._command_dict.keys()) + 1 == len(df.columns):
+        if len(self._column_names) + 1 == len(df.columns):
+            for row in (zip(df.columns[1:], self._column_names)):
+                self.logger.info(row)
             df.columns = ['Compound'] + \
-                [label for label in self._command_dict.keys()]
+                [label for label in self._column_names]
+
         else:
-            print(self._command_dict.keys())
-            print(df.columns)
+            self.logger.error(
+                'Final column names: {}'.format(self._column_names))
+            self.logger.error('Current column names: {}'.format(df.columns))
 
         df.to_csv(filename, index=False)
 
@@ -291,13 +301,16 @@ if __name__ == "__main__":
     with open('../examples/cxcalc_command_dict.json', 'r') as f:
         command_dict = json.load(f)
 
-    with open('../examples/test_smiles.smi', 'r') as f:
+    with open('../examples/test_smiles_short.smi', 'r') as f:
         smiles = f.read().splitlines()
 
-    whitelist = []
+    whitelist = {
+        'descriptors': [key for key in default_command_dict['descriptors'].keys()],
+        'ph_descriptors': [key for key in default_command_dict['ph_descriptors'].keys()]
+    }
 
     cag = ChemAxonDescriptorGenerator(smiles,
-                                      whitelist=whitelist,
-                                      ph_values=[6],
-                                      command_dict=command_dict)
+                                      whitelist={},
+                                      ph_values=[6.1, 7],
+                                      command_dict=command_dict, logfile='output.log')
     cag.generate('output.csv', lec=False)

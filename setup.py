@@ -5,14 +5,15 @@ with open('README.md', 'r') as f:
 
 setuptools.setup(
     name='chemdescriptor',
-    version='0.1.0',
+    version='0.2.0',
     author="DRP Project",
     author_email="darkreactionproject@haverford.edu",
     description="A standalone module to help generate molecular descriptors from various cheminformatics software",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/darkreactions/chemdescriptor",
-    packages=['chemdescriptor'],
+    packages=['chemdescriptor', 'chemdescriptor.defaults',
+              'chemdescriptor.generator'],
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",

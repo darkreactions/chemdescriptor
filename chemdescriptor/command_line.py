@@ -1,6 +1,9 @@
-from .chemaxon_generator import ChemAxonDescriptorGenerator
-from .rdkit_generator import RDKitDescriptorGenerator
+#from .generator import ChemAxonDescriptorGenerator, RDKitDescriptorGenerator
+from .generator.chemaxon import ChemAxonDescriptorGenerator
+from .generator.rdkit import RDKitDescriptorGenerator
+
 import argparse
+import json
 
 
 def cxcalc():
@@ -9,23 +12,40 @@ def cxcalc():
     parser.add_argument('-m', '--molecule',
                         help="Path to input SMILES file", required=True)
     parser.add_argument('-d', '--descriptors',
-                        help="Path to descriptor white list json file", required=True)
+                        help="Path to descriptor white list json file")
     parser.add_argument('-p', '--pH', type=float, nargs='+',
                         help="List of pH values at which to calculate descriptors", required=True)
     parser.add_argument('-c', '--commands',
                         help="Optional command stems for descriptors in json format")
-    parser.add_argument('-pc', '--phcommands',
-                        help="Optional command stems for pH dependent descriptorsin json format")
     parser.add_argument('-o', '--output',
                         help='Path to output file', required=True)
+    parser.add_argument('-l', '--logfile',
+                        help='Path to a log file')
 
     args = parser.parse_args()
+    print('Running cxcalc')
+    with open(args.molecule, 'r') as f:
+        smiles_list = f.read().splitlines()
 
-    c = ChemAxonDescriptorGenerator(args.molecule,
-                                    args.descriptors,
-                                    ph_values=args.pH,
-                                    command_stems=args.commands,
-                                    ph_command_stems=args.phcommands)
+    whitelist = {}
+    if args.descriptors:
+        with open(args.descriptors, 'r') as f:
+            whitelist = json.load(f)
+
+    command_dict = None
+    if args.commands:
+        with open(args.commands, 'r') as f:
+            command_dict = json.load(f)
+
+    ph = []
+    if args.pH:
+        ph = args.pH
+
+    c = ChemAxonDescriptorGenerator(smiles_list,
+                                    whitelist=whitelist,
+                                    ph_values=ph,
+                                    command_dict=command_dict,
+                                    logfile=args.logfile)
     c.generate(args.output)
 
 

@@ -22,10 +22,10 @@ default_command_dict = {
             ],
             "column_names": [
                 "_feat_ASA",
-                "_feat_ASA_H",
-                "_feat_ASA_P",
+                "_feat_ASA+",
                 "_feat_ASA-",
-                "_feat_ASA+"
+                "_feat_ASA_H",
+                "_feat_ASA_P"
             ]
         },
         "aliphaticringcount": {

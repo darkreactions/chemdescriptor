@@ -10,12 +10,13 @@ class BaseDescriptorGenerator(metaclass=ABCMeta):
 
     def __init__(self, logfile=None):
         self.logger = logging.getLogger('chemdescriptor')
+        self.logger.setLevel(logging.INFO)
         if logfile:
             hdlr = logging.FileHandler(logfile)
             formatter = logging.Formatter(
                 '%(asctime)s %(levelname)s %(message)s')
             hdlr.setFormatter(formatter)
-            logger.addHandler(hdlr)
+            self.logger.addHandler(hdlr)
 
     @abstractmethod
     def generate(self):
