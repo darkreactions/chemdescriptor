@@ -4,8 +4,11 @@ Generic molecular descriptor generator wrapper around various software packages 
 ## To install
 Type:
 ```git clone https://github.com/darkreactions/chemdescriptor```
+
 ```cd chemdescriptor```
+
 ```git checkout cxcalc_rewrite```
+
 ```pip install .```
 
 ## Requirements
