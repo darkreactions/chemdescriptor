@@ -11,6 +11,7 @@ from rdkit import Chem
 from rdkit.Chem import Descriptors, Descriptors3D
 
 from .base import BaseDescriptorGenerator
+from ..defaults.rdkit import default_command_dict
 
 
 class RDKitDescriptorGenerator(BaseDescriptorGenerator):
@@ -19,10 +20,8 @@ class RDKitDescriptorGenerator(BaseDescriptorGenerator):
 
     def __init__(self,
                  input_molecules,
-                 descriptors,
-                 ph_values=[],
-                 command_stems=None,
-                 ph_command_stems=None,
+                 whitelist={},
+                 command_dict={},
                  logfile=None):
         """Handles only SMILES and stores into self.molecules
         TODO: Handle InchI
@@ -38,38 +37,34 @@ class RDKitDescriptorGenerator(BaseDescriptorGenerator):
 
         # print(self.descriptor_dict.keys())
 
-        if isinstance(descriptors, str):
-            with open(descriptors, 'r') as f:
-                desc = json.load(f)
-        elif isinstance(descriptors, dict):
-            desc = descriptors
+        if whitelist:
+            if isinstance(whitelist, dict):
+                self.descriptors = whitelist['descriptors']
+            else:
+                raise Exception(
+                    "'whitelist' should be a dict. Found: {}".format(type(whitelist)))
         else:
-            raise Exception(
-                "'descriptors' should be a path or dict. Found: {}".format(type(descriptors)))
+            self.descriptors = default_command_dict['descriptors']
 
-        self.descriptors = desc['descriptors']
-
-        if isinstance(input_molecules, str):
-            if os.path.exists(input_molecules):
-                with open(input_molecules, 'r') as f:
-                    self.smiles = f.read().splitlines()
-        elif isinstance(input_molecules, (list, set, tuple)):
+        try:
+            iter(input_molecules)
             self.smiles = input_molecules
-        else:
-            raise Exception(
-                "'input_molecules' should be a path or list. Found: {}".format(type(input_molecules)))
+        except TypeError:
+            print('input_molecules is not an iterable, should be a list, tuple etc.')
 
         for molecule in self.smiles:
             self.molecules.append(Chem.MolFromSmiles(molecule))
 
-    def generate(self, output_file_path, dataframe=False, lec=False):
+    def generate(self, output_file_path, dataframe=False):
         table_data = defaultdict(list)
         table_data['Compound'] = self.smiles
         for molecule in self.molecules:
             for descriptor in self.descriptors:
-                # print(descriptor)
-                desc_function = self.descriptor_dict[descriptor]
-                table_data[descriptor].append(desc_function(molecule))
+                command = self.descriptors[descriptor]['command']
+                column_names = self.descriptors[descriptor]['column_names']
+                desc_function = self.descriptor_dict[' '.join(command)]
+                table_data[' '.join(column_names)].append(
+                    desc_function(molecule))
         table_df = pd.DataFrame.from_dict(table_data)
         table_df.to_csv(output_file_path, index=False)
 

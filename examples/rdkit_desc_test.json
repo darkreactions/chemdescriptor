@@ -1,5 +1,12 @@
 {
-    "descriptors": [
-        "BalabanJ"
-    ]
+    "descriptors": {
+        "BalabanJ": {
+            "command": [
+                "BalabanJ"
+            ],
+            "column_names": [
+                "_feat_BalabanJ"
+            ]
+        }
+    }
 }

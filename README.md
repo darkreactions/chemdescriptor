@@ -28,7 +28,7 @@ chemdescriptor-cx -m /path/to/SMILES/file -d /path/to/descriptor/whitelist/json 
 
 ```
 usage: chemdescriptor-cx [-h] -m MOLECULE -d DESCRIPTORS -p PH [PH ...]
-                         [-c COMMANDS] [-pc PHCOMMANDS] -o OUTPUT
+                         [-c COMMANDS] -o OUTPUT
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -40,14 +40,15 @@ optional arguments:
                         List of pH values at which to calculate descriptors
   -c COMMANDS, --commands COMMANDS
                         Optional command stems for descriptors in json format
-  -pc PHCOMMANDS, --phcommands PHCOMMANDS
-                        Optional command stems for pH dependent descriptorsin
-                        json format
   -o OUTPUT, --output OUTPUT
                         Path to output file
 ```
 
 ### In code
+
+The package will initially search cxcalc executable in the PATH variable if not
+will fall back to CXCALC_PATH
+
 Set CXCALC_PATH
 
 ```
@@ -57,15 +58,29 @@ os.environ['CXCALC_PATH'] = '/path/to/cxcalc'
 
 Import the generator class
 
-``` from chemdescriptor import ChemAxonDescriptorGenerator ```
+``` from chemdescriptor.generator.chemaxon import ChemAxonDescriptorGenerator as CAG```
 
-Instantiate a generator
+Import SMILES and whitelist
+
+```
+with open('/path/to/SMILES/file', 'r') as f:
+    smiles_list = f.read().splitlines()
+
+with open('/path/to/descriptor/whitelist/json', 'r') as f:
+    whitelist = json.load(f)
+```
+
+Instantiate a generator. ```smiles_list``` is a list of smiles and ```whitelist```
+is a dictionary of keys in the command_dict 
+```logfile``` is the path to a log which contains information such as the final cxcalc
+command, columns that were renamed and other errors for debugging
+
 ``` 
-cag = ChemAxonDescriptorGenerator('/path/to/SMILES/file',
-                                  '/path/to/descriptor/whitelist/json',
-                                  ph_values=[6, 7, 8],
-                                  command_stems=None,
-                                  ph_command_stems=None)
+cag = CAG(smiles_list,
+          whitelist,
+          ph_values=[6, 7, 8],
+          command_dict={},
+          logfile='/path/to/logfile')
 ```
 
 Generate csv output
@@ -109,32 +124,85 @@ Descriptor whitelist is a json file of the form:
 
 chemdescriptor expects 2 keys where "descriptors" are generic and "ph_descriptors" are ph dependent descriptors
 
-2 optional dictionaries can be passed to the ChemAxonDescriptorGenerator, "command_stems" and "ph_command_stems".
-These dictionaries "translate" the above descriptors into commands that ChemAxon cxcalc can understand.
+An optional dictionary can be passed to the ChemAxonDescriptorGenerator, "command_dict" which
+"translates" the above descriptors into commands that ChemAxon cxcalc can understand.
 
-For example, if no value is passed to the ph_command_stems, the following dictionary is used:
+It also consists of column names that will be added to the final output
+
+An example of a command_dict is:
 
 ```
-_default_ph_command_stems = {
-        'avgpol': 'avgpol',
-        'molpol': 'molpol',
-        'vanderwaals': 'vdwsa',
-        'asa': ['molecularsurfacearea', '-t', 'ASA'],
-        'asa+': ['molecularsurfacearea', '-t', 'ASA+'],
-        'asa-': ['molecularsurfacearea', '-t', 'ASA-'],
-        'asa_hydrophobic': ['molecularsurfacearea', '-t', 'ASA_H'],
-        'asa_polar': ['molecularsurfacearea', '-t', 'ASA_P'],
-        'hbda_acc': 'acceptorcount',
-        'hbda_don': 'donorcount',
-        'polar_surface_area': 'polarsurfacearea',
+command_dict = {
+    "descriptors": {
+        "atomcount_c": {
+            "command": [
+                "atomcount",
+                "-z",
+                "6"
+            ],
+            "column_names": [
+                "_feat_AtomCount_C"
+            ]
+        },
+        "wateraccessiblesurfacearea": {
+            "command": [
+                "wateraccessiblesurfacearea"
+            ],
+            "column_names": [
+                "_feat_ASA",
+                "_feat_ASA+",
+                "_feat_ASA-",
+                "_feat_ASA_H",
+                "_feat_ASA_P"
+            ]
+        }
+    "ph_descriptors": {
+        "acceptorcount": {
+            "command": [
+                "acceptorcount"
+            ],
+            "column_names": [
+                "_feat_Hacceptorcount"
+            ]
+        },
+        "donorcount": {
+            "command": [
+                "donorcount"
+            ],
+            "column_names": [
+                "_feat_Hdonorcount"
+            ]
+        }
     }
+
+```
+```command_dict``` consists of 2 dictionaries with keys ```descriptors``` and 
+```ph_descriptors```. Within each dictionary are descriptors referred in the whitelist. 
+
+Under each descriptor, two lists are required ```command``` and ```column_names```
+
+Command refers to the command line options for cxcalc as documented 
+[here](https://docs.chemaxon.com/display/docs/cxcalc+calculator+functions)
+Note that commands with multiple words are entries in a list. For example, the command 
+```atomcount -z 6``` is represented in the dictionary as ```['atomcount', '-z', '6']```
+
+```column_names``` is a list of names the user wants to rename the cxcalc generated
+csv column names.
+
+Certain commands generate multiple columns for example, ```wateraccessiblesurfacearea```
+generates 5 columns. Therefore, the ```column_names``` list becomes
+```
+"column_names": [
+                "_feat_ASA",
+                "_feat_ASA+",
+                "_feat_ASA-",
+                "_feat_ASA_H",
+                "_feat_ASA_P"
+            ]
 ```
 
-Note that commands with multiple words are entries in a list. For example, the command 
-
-```molecularsurfacearea -t ASA```
-
-is represented in the dictionary as ```['molecularsurfacearea', '-t', 'ASA']```
+*Note* : If the number of columns generated by cxcalc do not match the expected count, 
+none of the column names are renamed.
 
 ### RDKit
 
