@@ -39,12 +39,22 @@ class RDKitDescriptorGenerator(BaseDescriptorGenerator):
 
         if whitelist:
             if isinstance(whitelist, dict):
-                self.descriptors = whitelist['descriptors']
+                self.descriptor_whitelist = whitelist['descriptors']
             else:
                 raise Exception(
                     "'whitelist' should be a dict. Found: {}".format(type(whitelist)))
         else:
-            self.descriptors = default_command_dict['descriptors']
+            self.descriptor_whitelist = list(
+                default_command_dict['descriptors'].keys())
+
+        if command_dict:
+            if isinstance(command_dict, dict):
+                self.command_dict = command_dict
+            else:
+                raise Exception(
+                    "'command_dict' should be a dict. Found: {}".format(type(command_dict)))
+        else:
+            self.command_dict = default_command_dict['descriptors']
 
         try:
             iter(input_molecules)
@@ -59,14 +69,24 @@ class RDKitDescriptorGenerator(BaseDescriptorGenerator):
         table_data = defaultdict(list)
         table_data['Compound'] = self.smiles
         for molecule in self.molecules:
-            for descriptor in self.descriptors:
-                command = self.descriptors[descriptor]['command']
-                column_names = self.descriptors[descriptor]['column_names']
-                desc_function = self.descriptor_dict[' '.join(command)]
-                table_data[' '.join(column_names)].append(
-                    desc_function(molecule))
+            for descriptor in self.descriptor_whitelist:
+                if descriptor not in self.command_dict:
+                    self.logger.error(
+                        'Descriptor {} not found in command dict'.format(descriptor))
+                    continue
+                else:
+                    command = self.command_dict[descriptor]['command']
+                    column_names = self.command_dict[descriptor]['column_names']
+                    # TODO: Join with space or underscore?
+                    desc_function = self.descriptor_dict[' '.join(command)]
+                    table_data[' '.join(column_names)].append(
+                        desc_function(molecule))
         table_df = pd.DataFrame.from_dict(table_data)
-        table_df.to_csv(output_file_path, index=False)
+
+        if output_file_path:
+            table_df.to_csv(output_file_path, index=False)
+
+        return table_df
 
 
 if __name__ == "__main__":
