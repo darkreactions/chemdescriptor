@@ -100,7 +100,7 @@ class ChemAxonDescriptorGenerator(BaseDescriptorGenerator):
 
         for ph_desc in self.whitelist['ph_descriptors']:
             self._add_command(ph_desc, self.ph_descriptors_dict,
-                              postfix='nominal')
+                              postfix='', ph=3.0)
 
             for ph in self.ph_values:
                 ph_string = str(ph).replace('.', '_')  # R compatibility
