@@ -27,7 +27,8 @@ class ChemAxonDescriptorGenerator(BaseDescriptorGenerator):
                  whitelist={},
                  ph_values=[],
                  command_dict=None,
-                 logfile=None):
+                 logfile=None,
+                 standardize=False):
         """
         Initializes the generator
         Args:
@@ -63,7 +64,18 @@ class ChemAxonDescriptorGenerator(BaseDescriptorGenerator):
 
         try:
             iter(input_molecules)
-            self.smiles = input_molecules
+            if standardize:
+                if shutil.which('standardize'):
+                    self.STANDARDIZE_PATH = Path(
+                        shutil.which('standardize')).parent
+                elif 'STANDARDIZE_PATH' in os.environ:
+                    self.STANDARDIZE_PATH = os.environ['STANDARDIZE_PATH']
+                else:
+                    raise Exception(
+                        'standardize command not found or STANDARDIZE_PATH environment variable not set')
+                self.smiles = self._standardize(input_molecules)
+            else:
+                self.smiles = input_molecules
         except TypeError:
             print('input_molecules is not an iterable, should be a list, tuple etc.')
 
@@ -81,6 +93,15 @@ class ChemAxonDescriptorGenerator(BaseDescriptorGenerator):
         self._column_names = []
         self._setup_descriptor_commands()
         self._setup_ph_descriptor_commands()
+
+    def _standardize(self, smiles):
+        stdProc = subprocess.run([os.path.join(self.STANDARDIZE_PATH, 'standardize'),
+                                  *smiles,
+                                  '-c', 'removefragment:method=keeplargest',
+                                  ], stdout=subprocess.PIPE)
+        smiles = [line.decode("utf-8") for line in stdProc.stdout.splitlines()]
+        print(smiles)
+        return smiles
 
     def _setup_descriptor_commands(self):
         """
@@ -210,7 +231,8 @@ class ChemAxonDescriptorGenerator(BaseDescriptorGenerator):
                                   output_file,
                                   'leconformer', self.input_molecule_file_path, ])
         if lecProc.returncode != 0:
-            print(lecProc.stderr)
+            self.logger.error(lecProc.stderr)
+            # print(lecProc.stderr)
 
     def generate_descriptors(self, smiles_molecules, output_filename):
         """
@@ -271,7 +293,8 @@ class ChemAxonDescriptorGenerator(BaseDescriptorGenerator):
 
 
 if __name__ == "__main__":
-    os.environ['CXCALC_PATH'] = '/Applications/MarvinSuite/bin'
+    os.environ['CXCALC_PATH'] = 'C:/Program Files/ChemAxon/MarvinSuite/bin'
+    os.environ['STANDARDIZE_PATH'] = 'C:/Program Files/ChemAxon/StructureRepresentationToolkit/bin'
 
     """
     _cxcalcpHCommandStems = {
@@ -298,10 +321,10 @@ if __name__ == "__main__":
         '/Users/vshekar/Downloads/debug_for_shekar/descriptor_files/descriptor_ph_commands_set1_v0.json', 'r'))
     """
 
-    with open('../examples/cxcalc_command_dict.json', 'r') as f:
+    with open('../../examples/cxcalc_command_dict.json', 'r') as f:
         command_dict = json.load(f)
 
-    with open('../examples/test_smiles_short.smi', 'r') as f:
+    with open('../../examples/test_smiles_short.smi', 'r') as f:
         smiles = f.read().splitlines()
 
     whitelist = {
@@ -312,5 +335,7 @@ if __name__ == "__main__":
     cag = ChemAxonDescriptorGenerator(smiles,
                                       whitelist={},
                                       ph_values=[6.1, 7],
-                                      command_dict=command_dict, logfile='output.log')
+                                      command_dict=command_dict,
+                                      logfile='output.log',
+                                      standardize=True)
     cag.generate('output.csv', lec=False)
