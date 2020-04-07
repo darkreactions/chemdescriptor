@@ -80,12 +80,18 @@ is a dictionary of keys in the command_dict
 ```logfile``` is the path to a log which contains information such as the final cxcalc
 command, columns that were renamed and other errors for debugging
 
+Chemaxon standardize command can be used to remove small fragments in the smiles_list
+Set standardize=True and also set STANDARDIZE_PATH
+
+`os.environ['STANDARDIZE_PATH'] = '/path/to/standardize'`
+
 ``` 
 cag = CAG(smiles_list,
           whitelist,
           ph_values=[6, 7, 8],
           command_dict={},
-          logfile='/path/to/logfile')
+          logfile='/path/to/logfile',
+          standardize=True)
 ```
 
 Generate csv output
