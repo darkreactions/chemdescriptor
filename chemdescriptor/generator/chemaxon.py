@@ -39,9 +39,8 @@ class ChemAxonDescriptorGenerator(BaseDescriptorGenerator):
             logfile:            Path to logfile in case of errors
         """
         super().__init__(logfile)
-        print('Starting cxcalc')
+        self.logger.info('Starting cxcalc')
         # Look for cxcalc path
-        # TODO: Auto search for cxcalc
         if shutil.which('cxcalc'):
             self.CXCALC_PATH = Path(shutil.which('cxcalc')).parent
         elif 'CXCALC_PATH' in os.environ:
@@ -100,7 +99,7 @@ class ChemAxonDescriptorGenerator(BaseDescriptorGenerator):
                                   '-c', 'removefragment:method=keeplargest',
                                   ], stdout=subprocess.PIPE)
         smiles = [line.decode("utf-8") for line in stdProc.stdout.splitlines()]
-        print(smiles)
+        self.logger.info('List of standardized smiles: {}'.format(smiles))
         return smiles
 
     def _setup_descriptor_commands(self):
@@ -232,7 +231,7 @@ class ChemAxonDescriptorGenerator(BaseDescriptorGenerator):
                                   'leconformer', self.input_molecule_file_path, ])
         if lecProc.returncode != 0:
             self.logger.error(lecProc.stderr)
-            # print(lecProc.stderr)
+            print(lecProc.stderr)
 
     def generate_descriptors(self, smiles_molecules, output_filename):
         """
@@ -252,7 +251,7 @@ class ChemAxonDescriptorGenerator(BaseDescriptorGenerator):
                                    '-g', '-o', output_filename, smiles_molecules] +
                                   _command_list)
         if calcProc.returncode != 0:
-            # print(calcProc.stderr)
+            print(calcProc.stderr)
             self.logger.error(calcProc.stderr)
 
         return self._parse_output(output_filename)
