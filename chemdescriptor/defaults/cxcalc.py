@@ -62,7 +62,7 @@ default_command_dict = {
                 "_feat_AtomCount_C"
             ]
         },
-        "atomcound_n": {
+        "atomcount_n": {
             "command": [
                 "atomcount",
                 "-z",

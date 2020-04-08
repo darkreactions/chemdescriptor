@@ -62,25 +62,32 @@ class RDKitDescriptorGenerator(BaseDescriptorGenerator):
         except TypeError:
             print('input_molecules is not an iterable, should be a list, tuple etc.')
 
-        for molecule in self.smiles:
-            self.molecules.append(Chem.MolFromSmiles(molecule))
+        # for molecule in self.smiles:
+        #    self.molecules.append(Chem.MolFromSmiles(molecule))
 
     def generate(self, output_file_path, dataframe=False):
         table_data = defaultdict(list)
-        table_data['Compound'] = self.smiles
-        for molecule in self.molecules:
-            for descriptor in self.descriptor_whitelist:
-                if descriptor not in self.command_dict:
-                    self.logger.error(
-                        'Descriptor {} not found in command dict'.format(descriptor))
-                    continue
-                else:
-                    command = self.command_dict[descriptor]['command']
-                    column_names = self.command_dict[descriptor]['column_names']
-                    # TODO: Join with space or underscore?
-                    desc_function = self.descriptor_dict[' '.join(command)]
-                    table_data[' '.join(column_names)].append(
-                        desc_function(molecule))
+
+        # for molecule in self.molecules:
+        for smi in self.smiles:
+            molecule = Chem.MolFromSmiles(smi)
+            if molecule:
+                table_data['Compound'].append(smi)
+                for descriptor in self.descriptor_whitelist:
+                    if descriptor not in self.command_dict:
+                        self.logger.error(
+                            'Descriptor {} not found in command dict'.format(descriptor))
+                        continue
+                    else:
+                        command = self.command_dict[descriptor]['command']
+                        column_names = self.command_dict[descriptor]['column_names']
+                        # TODO: Join with space or underscore?
+                        desc_function = self.descriptor_dict[' '.join(command)]
+                        table_data[' '.join(column_names)].append(
+                            desc_function(molecule))
+            else:
+                self.logger.error(
+                    '{} did not generate a mol object'.format(smi))
         table_df = pd.DataFrame.from_dict(table_data)
 
         if output_file_path:

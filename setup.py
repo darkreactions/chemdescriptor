@@ -5,7 +5,7 @@ with open('README.md', 'r') as f:
 
 setuptools.setup(
     name='chemdescriptor',
-    version='0.2.2',
+    version='0.2.3',
     author="DRP Project",
     author_email="darkreactionproject@haverford.edu",
     description="A standalone module to help generate molecular descriptors from various cheminformatics software",
