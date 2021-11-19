@@ -1,29 +1,29 @@
 import setuptools
 
-with open('README.md', 'r') as f:
+with open("README.md", "r") as f:
     long_description = f.read()
 
 setuptools.setup(
-    name='chemdescriptor',
-    version='0.2.3',
+    name="chemdescriptor",
+    version="0.2.4",
     author="DRP Project",
     author_email="darkreactionproject@haverford.edu",
     description="A standalone module to help generate molecular descriptors from various cheminformatics software",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/darkreactions/chemdescriptor",
-    packages=['chemdescriptor', 'chemdescriptor.defaults',
-              'chemdescriptor.generator'],
+    packages=["chemdescriptor", "chemdescriptor.defaults", "chemdescriptor.generator"],
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
-    install_requires=['pandas'],
+    install_requires=["pandas"],
     include_package_data=True,
     entry_points={
-        'console_scripts': ['chemdescriptor-cx=chemdescriptor.command_line:cxcalc',
-                            'chemdescriptor-rdkit=chemdescriptor.command_line:rdkit'],
-
-    }
+        "console_scripts": [
+            "chemdescriptor-cx=chemdescriptor.command_line:cxcalc",
+            "chemdescriptor-rdkit=chemdescriptor.command_line:rdkit",
+        ],
+    },
 )
